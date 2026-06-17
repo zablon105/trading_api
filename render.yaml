@@ -1,32 +1,44 @@
+# ============================================================================
+# RENDER DEPLOYMENT CONFIGURATION
+# ============================================================================
+# This file tells Render how to build and run the trading-api application
+# It uses Python runtime and connects to Supabase for the database
+
 services:
   - type: web
     name: trading-api
-    runtime: python
+    runtime: python  # Use Python runtime on Render
+    
+    # Build command: Install dependencies, collect static files, run migrations
     buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate
+    
+    # Start command: Run the app with Gunicorn WSGI server
     startCommand: gunicorn core.wsgi:application
+    
+    # Environment variables for production
     envVars:
+      # Secret key for Django security (Render generates automatically)
       - key: SECRET_KEY
         generateValue: true
+      
+      # Disable debug mode in production (IMPORTANT for security)
       - key: DEBUG
         value: False
-      - key: DB_NAME
-        value: trading_db
-      - key: DB_USER
-        fromDatabase:
-          name: trading-db
-          property: user
-      - key: DB_PASSWORD
-        fromDatabase:
-          name: trading-db
-          property: password
-      - key: DB_HOST
-        fromDatabase:
-          name: trading-db
-          property: host
-      - key: DB_PORT
-        fromDatabase:
-          name: trading-db
-          property: port
+      
+      # Allowed hosts - domains that can access this app
+      - key: ALLOWED_HOSTS
+        value: '*'
+      
+      # DATABASE_URL must be set manually in Render dashboard:
+      # Go to Service Settings → Environment → Add "DATABASE_URL"
+      # Value: Get from Supabase Project Settings → Database → Connection String
+      # Format: postgresql://user:password@host:port/database
+
+# ============================================================================
+# NOTE: Database Configuration
+# ============================================================================
+# This app uses Supabase (external managed PostgreSQL database)
+# NOT a Render-managed database. Set DATABASE_URL environment variable in Render dashboard.
 
 databases:
   - name: trading-db

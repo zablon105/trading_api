@@ -1,18 +1,38 @@
-# Virtual environment
+# ============================================================================
+# VIRTUAL ENVIRONMENT
+# ============================================================================
+# Never commit Python virtual environment - each developer has their own
 venv/
 
-# Environment variables
+# ============================================================================
+# ENVIRONMENT VARIABLES
+# ============================================================================
+# DO NOT COMMIT .env - Contains sensitive database credentials
+# Each environment (local, Render, etc.) has its own .env file
 .env
 
-# Python cache
+# ============================================================================
+# PYTHON CACHE & COMPILED FILES
+# ============================================================================
+# Compiled Python bytecode
 __pycache__/
 *.pyc
 *.pyo
 
-# Django
+# ============================================================================
+# DJANGO
+# ============================================================================
+# Django debug logs
 *.log
+
+# SQLite database (used in development)
 db.sqlite3
+
+# Collected static files for production
 staticfiles/
 
-# VS Code
+# ============================================================================
+# IDE & EDITOR
+# ============================================================================
+# VS Code settings (if you want to share, move to a template)
 .vscode/
