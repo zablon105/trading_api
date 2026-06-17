@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: trading-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate
+    startCommand: gunicorn core.wsgi:application
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: False
+      - key: DB_NAME
+        value: trading_db
+      - key: DB_USER
+        fromDatabase:
+          name: trading-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: trading-db
+          property: password
+      - key: DB_HOST
+        fromDatabase:
+          name: trading-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: trading-db
+          property: port
+
+databases:
+  - name: trading-db
+    plan: free
