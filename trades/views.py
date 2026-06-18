@@ -81,3 +81,13 @@ def close_trade(request, pk):
     trade.save()
 
     return Response(TradeSerializer(trade).data)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def health_check(request):
+    """
+    GET /api/health/
+    Returns a simple production health status.
+    """
+    return Response({'status': 'ok', 'environment': 'production'})
