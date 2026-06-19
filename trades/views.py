@@ -168,3 +168,42 @@ def trade_analytics(request):
         'total_wins': len(wins),
         'total_losses': len(losses),
     })
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def trade_by_ticket(request, ticket):
+    """
+    GET /api/trades/by-ticket/<ticket>/
+    Look up a trade's Django ID and current data by its MT5 ticket number.
+    Used by the EA to find which record to update/close.
+    """
+    try:
+        trade = Trade.objects.get(ticket=ticket)
+    except Trade.DoesNotExist:
+        return Response(
+            {'error': 'Trade not found'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    return Response(TradeSerializer(trade).data)
+
+
+@api_view(['PATCH'])
+@permission_classes([AllowAny])
+def update_trade_by_ticket(request, ticket):
+    """
+    PATCH /api/trades/by-ticket/<ticket>/update/
+    Partial update (e.g. SL/TP change) for an open trade, matched by MT5 ticket.
+    """
+    try:
+        trade = Trade.objects.get(ticket=ticket)
+    except Trade.DoesNotExist:
+        return Response(
+            {'error': 'Trade not found'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    serializer = TradeSerializer(trade, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
