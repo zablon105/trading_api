@@ -42,3 +42,20 @@ class Trade(models.Model):
 
     def __str__(self):
         return f"{self.direction} {self.symbol} | Ticket #{self.ticket} | {self.status}"
+    
+
+class AccountSnapshot(models.Model):
+    """Stores the latest known account balance/equity from MT5."""
+
+    balance     = models.DecimalField(max_digits=20, decimal_places=2)
+    equity      = models.DecimalField(max_digits=20, decimal_places=2)
+    account_id  = models.CharField(max_length=50, default='default')
+    environment = models.CharField(max_length=10, default='demo')  # 'demo' or 'live'
+    updated_at  = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Account Snapshot'
+        verbose_name_plural = 'Account Snapshots'
+
+    def __str__(self):
+        return f"{self.environment.upper()} | Balance: {self.balance} | Equity: {self.equity}"

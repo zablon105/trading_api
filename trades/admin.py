@@ -12,3 +12,9 @@ class TradeAdmin(admin.ModelAdmin):
     list_filter = ['status', 'direction', 'symbol']
     search_fields = ['ticket', 'symbol']
     ordering = ['-open_time']
+
+from .models import AccountSnapshot
+
+@admin.register(AccountSnapshot)
+class AccountSnapshotAdmin(admin.ModelAdmin):
+    list_display = ['account_id', 'environment', 'balance', 'equity', 'updated_at']

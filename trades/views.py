@@ -207,3 +207,40 @@ def update_trade_by_ticket(request, ticket):
         serializer.save()
         return Response(serializer.data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+from .models import AccountSnapshot
+from .serializers import AccountSnapshotSerializer
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def update_account_snapshot(request):
+    """
+    POST /api/account/
+    Body: { "account_id": "2001574142", "environment": "demo", "balance": "...", "equity": "..." }
+    Creates or updates the snapshot for this account_id.
+    """
+    account_id = request.data.get('account_id', 'default')
+    snapshot, _ = AccountSnapshot.objects.get_or_create(account_id=account_id)
+    serializer = AccountSnapshotSerializer(snapshot, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_account_snapshot(request):
+    """
+    GET /api/account/?account_id=2001574142
+    Returns the latest balance/equity for the given account (or the most recent overall if omitted).
+    """
+    account_id = request.query_params.get('account_id')
+    qs = AccountSnapshot.objects.all()
+    if account_id:
+        qs = qs.filter(account_id=account_id)
+    snapshot = qs.order_by('-updated_at').first()
+    if not snapshot:
+        return Response({'balance': 0, 'equity': 0, 'environment': 'demo'})
+    return Response(AccountSnapshotSerializer(snapshot).data)

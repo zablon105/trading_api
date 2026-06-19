@@ -22,3 +22,11 @@ class TradeSerializer(serializers.ModelSerializer):
         if value <= 0:
             raise serializers.ValidationError("Open price must be greater than 0.")
         return value
+
+from .models import AccountSnapshot
+
+
+class AccountSnapshotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AccountSnapshot
+        fields = '__all__'
