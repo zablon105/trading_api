@@ -91,3 +91,80 @@ def health_check(request):
     Returns a simple production health status.
     """
     return Response({'status': 'ok', 'environment': 'production'})
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def trade_analytics(request):
+    """
+    GET /api/trades/analytics/
+    Returns detailed analytics: equity curve, win rate, profit by symbol, etc.
+    """
+    trades = Trade.objects.filter(status='CLOSED').order_by('open_time')
+
+    # Equity curve - cumulative profit over time
+    equity_curve = []
+    cumulative = 0
+    for t in trades:
+        if t.profit is not None:
+            cumulative += float(t.profit)
+            equity_curve.append({
+                'date': t.close_time.strftime('%Y-%m-%d %H:%M') if t.close_time else t.open_time.strftime('%Y-%m-%d %H:%M'),
+                'cumulative_profit': round(cumulative, 2),
+                'trade_profit': float(t.profit),
+                'ticket': t.ticket,
+            })
+
+    # Profit by symbol
+    symbols = {}
+    for t in trades:
+        if t.profit is not None:
+            symbols.setdefault(t.symbol, 0)
+            symbols[t.symbol] += float(t.profit)
+    profit_by_symbol = [{'symbol': k, 'profit': round(v, 2)} for k, v in symbols.items()]
+
+    # Win/loss stats
+    wins = [float(t.profit) for t in trades if t.profit and t.profit > 0]
+    losses = [float(t.profit) for t in trades if t.profit and t.profit < 0]
+    total_closed = trades.count()
+    win_rate = round((len(wins) / total_closed * 100), 1) if total_closed > 0 else 0
+    avg_win = round(sum(wins) / len(wins), 2) if wins else 0
+    avg_loss = round(sum(losses) / len(losses), 2) if losses else 0
+    profit_factor = round(abs(sum(wins) / sum(losses)), 2) if losses and sum(losses) != 0 else 0
+
+    # Max drawdown (simplified - biggest peak-to-trough drop in equity curve)
+    max_drawdown = 0
+    peak = 0
+    running = 0
+    for t in trades:
+        if t.profit is not None:
+            running += float(t.profit)
+            if running > peak:
+                peak = running
+            drawdown = peak - running
+            if drawdown > max_drawdown:
+                max_drawdown = drawdown
+
+    # Daily P&L (last 30 days)
+    from django.db.models.functions import TruncDate
+    from django.db.models import Sum
+    daily = (
+        trades.exclude(close_time__isnull=True)
+        .annotate(day=TruncDate('close_time'))
+        .values('day')
+        .annotate(total=Sum('profit'))
+        .order_by('day')
+    )
+    daily_pnl = [{'date': str(d['day']), 'profit': float(d['total'] or 0)} for d in daily]
+
+    return Response({
+        'equity_curve': equity_curve,
+        'profit_by_symbol': profit_by_symbol,
+        'daily_pnl': daily_pnl,
+        'win_rate': win_rate,
+        'avg_win': avg_win,
+        'avg_loss': avg_loss,
+        'profit_factor': profit_factor,
+        'max_drawdown': round(max_drawdown, 2),
+        'total_wins': len(wins),
+        'total_losses': len(losses),
+    })
