@@ -92,6 +92,7 @@ def health_check(request):
     """
     return Response({'status': 'ok', 'environment': 'production'})
 
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def trade_analytics(request):
@@ -169,6 +170,7 @@ def trade_analytics(request):
         'total_losses': len(losses),
     })
 
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def trade_by_ticket(request, ticket):
@@ -208,6 +210,7 @@ def update_trade_by_ticket(request, ticket):
         return Response(serializer.data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 from .models import AccountSnapshot
 from .serializers import AccountSnapshotSerializer
 
@@ -216,12 +219,15 @@ from .serializers import AccountSnapshotSerializer
 @permission_classes([AllowAny])
 def update_account_snapshot(request):
     """
-    POST /api/account/
+    POST /api/account/update/
     Body: { "account_id": "2001574142", "environment": "demo", "balance": "...", "equity": "..." }
     Creates or updates the snapshot for this account_id.
     """
     account_id = request.data.get('account_id', 'default')
-    snapshot, _ = AccountSnapshot.objects.get_or_create(account_id=account_id)
+    snapshot, _ = AccountSnapshot.objects.get_or_create(
+        account_id=account_id,
+        defaults={'balance': 0, 'equity': 0}
+    )
     serializer = AccountSnapshotSerializer(snapshot, data=request.data, partial=True)
     if serializer.is_valid():
         serializer.save()
