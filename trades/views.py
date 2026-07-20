@@ -83,12 +83,13 @@ def close_trade(request, pk):
     return Response(TradeSerializer(trade).data)
 
 
-@api_view(['GET'])
+@api_view(['GET', 'HEAD'])
 @permission_classes([AllowAny])
 def health_check(request):
     """
-    GET /api/health/
+    GET/HEAD /api/health/
     Returns a simple production health status.
+    Used by UptimeRobot for uptime monitoring.
     """
     return Response({'status': 'ok', 'environment': 'production'})
 
